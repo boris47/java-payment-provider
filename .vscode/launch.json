@@ -1,0 +1,16 @@
+{
+	"configurations": [
+		
+		{
+			"type": "java",
+			"name": "Spring Boot-StripeProviderServiceApplication",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"mainClass": "com.hulkhiretech.payments.StripeProviderServiceApplication",
+			"projectName": "stripe-provider-service",
+			"args": ["--spring.profiles.active=local"],
+			"envFile": "${workspaceFolder}/.env",
+			"preLaunchTask": "maven clean build"
+		}
+	]
+}
