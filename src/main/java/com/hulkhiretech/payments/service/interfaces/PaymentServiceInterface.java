@@ -1,15 +1,12 @@
 package com.hulkhiretech.payments.service.interfaces;
 
-import com.hulkhiretech.payments.controller.pojo.RequestCreatePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseCreatePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseExpirePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseRetrievePayment;
+import com.hulkhiretech.payments.pojo.CreateTxnRequest;
+import com.hulkhiretech.payments.pojo.CreateTxnResponse;
+import com.hulkhiretech.payments.pojo.InitiateTxnRequest;
 
 public interface PaymentServiceInterface
 {
-	public ResponseCreatePayment createPayment(RequestCreatePayment request);
+	public CreateTxnResponse createTxn(CreateTxnRequest request);
 	
-	public ResponseRetrievePayment retrievePayment(String paymentId);
-	
-	public ResponseExpirePayment expirePayment(String paymentId);
+	public String initiateTxn(String id, InitiateTxnRequest request);
 }

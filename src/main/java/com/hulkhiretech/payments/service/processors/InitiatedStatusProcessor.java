@@ -1,0 +1,34 @@
+package com.hulkhiretech.payments.service.processors;
+
+import com.hulkhiretech.payments.dao.interfaces.TransactionDao;
+import com.hulkhiretech.payments.entity.TransactionDTO;
+import com.hulkhiretech.payments.entity.TransactionEntity;
+import com.hulkhiretech.payments.service.interfaces.TxnStatusProcessor;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RequiredArgsConstructor
+@Service
+public class InitiatedStatusProcessor implements TxnStatusProcessor
+{
+	// private final TransactionDao transactionDao;
+	
+	private final ModelMapper modelMapper;
+	
+	@Override
+	public TransactionDTO processStatus(TransactionDTO txn)
+	{
+		log.info("Processing transaction in InitiatedStatusProcessor");
+		
+		// TODO Update DB as Initiated
+		
+		// final var entity = modelMapper.map(txn, TransactionEntity.class);
+		
+		return txn;
+	}
+}

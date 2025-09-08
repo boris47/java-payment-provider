@@ -1,16 +1,18 @@
 package com.hulkhiretech.payments.service;
 
+import java.util.UUID;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import com.hulkhiretech.payments.controller.pojo.RequestCreatePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseCreatePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseExpirePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseRetrievePayment;
-import com.hulkhiretech.payments.service.helpers.CreatePaymentHelper;
-import com.hulkhiretech.payments.service.helpers.ExpirePaymentHelper;
-import com.hulkhiretech.payments.service.helpers.RetrievePaymentHelper;
+
+import com.hulkhiretech.payments.entity.TransactionDTO;
+import com.hulkhiretech.payments.enums.TransactionStatusEnum;
+import com.hulkhiretech.payments.pojo.CreateTxnRequest;
+import com.hulkhiretech.payments.pojo.CreateTxnResponse;
+import com.hulkhiretech.payments.pojo.InitiateTxnRequest;
 import com.hulkhiretech.payments.service.interfaces.PaymentServiceInterface;
-import com.hulkhiretech.payments.service.validation.Validation;
-import com.hulkhiretech.payments.http.HttpServiceEngine;
+import com.hulkhiretech.payments.service.interfaces.PaymentStatusServiceInterface;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,44 +21,45 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentServiceInterface
 {
-	private final HttpServiceEngine httpServiceEngine;
+	private final PaymentStatusServiceInterface paymentStatusService;
 	
-	private final CreatePaymentHelper createPaymentHelper;
+	private final ModelMapper modelMapper;
 	
-	private final RetrievePaymentHelper retrievePaymentHelper;
-	
-	private final ExpirePaymentHelper expirePaymentHelper;
-	
+	/** Create txn in DB */
 	@Override
-	public ResponseCreatePayment createPayment(RequestCreatePayment paymentRequest)
+	public CreateTxnResponse createTxn(CreateTxnRequest request)
 	{
-		Validation.Validate_CreatePayment(paymentRequest);
+		log.info("Creating transaction in service layer");
 		
-		log.info("Creating payment for request {}", paymentRequest);
-		final var request = createPaymentHelper.PrepareRequest(paymentRequest);
-		final var res = httpServiceEngine.MakeRequest(request);
-		return createPaymentHelper.ProcessResponse(res);
+		final var transactionDTO = modelMapper.map(request, TransactionDTO.class);
+		final String uniqueGeneratedReference = UUID.randomUUID().toString();
+		{
+			transactionDTO.setTxnStatus(TransactionStatusEnum.CREATED.name());
+			transactionDTO.setTxnReference(uniqueGeneratedReference);
+			log.info("Mapped entity: {}", transactionDTO);
+		}
+		final TransactionDTO dto = paymentStatusService.processStatus(transactionDTO);
+		final CreateTxnResponse response = new CreateTxnResponse();
+		{
+			response.setTxnReference(dto.getTxnReference());
+			response.setTxnStatus(dto.getTxnStatus());
+		}
+		return response;
 	}
 	
+	/**
+	 * - Initiate txn in DB
+	 * - Make Rest APU calls to stripe-provider-service for create-payment api
+	 * - Update DB as Pending
+	 * - Return url back to invoker
+	 */
 	@Override
-	public ResponseRetrievePayment retrievePayment(String paymentId)
+	public String initiateTxn(String id, InitiateTxnRequest request)
 	{
-		Validation.Validate_PaymentId(paymentId);
+		log.info("Initiating transaction with id: {} in service layer", id);
 		
-		log.info("Retrieving payment for id {}", paymentId);
-		final var request = retrievePaymentHelper.PrepareRequest(paymentId);
-		final var res = httpServiceEngine.MakeRequest(request);
-		return retrievePaymentHelper.ProcessResponse(res);
-	}
-	
-	@Override
-	public ResponseExpirePayment expirePayment(String paymentId)
-	{
-		Validation.Validate_PaymentId(paymentId);
+	//	var response = paymentStatusService.processStatus(1);
 		
-		log.info("Expiring payment for id {}", paymentId);
-		final var request = expirePaymentHelper.PrepareRequest(paymentId);
-		final var res = httpServiceEngine.MakeRequest(request);
-		return expirePaymentHelper.ProcessResponse(res);
+		return "";
 	}
 }

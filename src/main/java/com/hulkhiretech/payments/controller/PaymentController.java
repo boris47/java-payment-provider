@@ -1,53 +1,48 @@
 package com.hulkhiretech.payments.controller;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hulkhiretech.payments.controller.pojo.RequestCreatePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseCreatePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseExpirePayment;
-import com.hulkhiretech.payments.controller.pojo.ResponseRetrievePayment;
+import com.hulkhiretech.payments.pojo.CreateTxnRequest;
+import com.hulkhiretech.payments.pojo.CreateTxnResponse;
+import com.hulkhiretech.payments.pojo.InitiateTxnRequest;
 import com.hulkhiretech.payments.service.interfaces.PaymentServiceInterface;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-
 
 @RestController
-@RequestMapping("/payments")
+@RequestMapping("/v1/payments")
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentController
 {
-	private final PaymentServiceInterface paymentInterface;
+	private final PaymentServiceInterface paymentService;
 	
-	@PostConstruct
-	private void OnInit()
+	@PostMapping
+	public CreateTxnResponse createTxn(@RequestBody CreateTxnRequest request)
 	{
-	//	log.info("PaymentService {} create in {}", paymentInterface.getClass().getName(), PaymentController.class.getName());
+		log.info("Creating transaction with request: {}", request);
+		
+		final var response = paymentService.createTxn(request);
+		log.info("Response from service layer: {}", response);
+		
+		return response;
 	}
 	
-	@PostMapping()
-	public ResponseCreatePayment createPayment(@RequestBody RequestCreatePayment request)
+	@PostMapping("{id}/initiate")
+	public String initiateTxn(@PathVariable String id, @RequestBody InitiateTxnRequest request)
 	{
-		return paymentInterface.createPayment(request);
-	}
-	
-	@GetMapping("/{paymentId}")
-	public ResponseRetrievePayment retrievePayment(@PathVariable String paymentId)
-	{
-		return paymentInterface.retrievePayment(paymentId);
-	}
-	
-	@PostMapping("/{paymentId}/expire")
-	public ResponseExpirePayment expirePayment(@PathVariable String paymentId)
-	{
-		return paymentInterface.expirePayment(paymentId);
+		log.info("Initiating transaction with request: {}", request);
+		
+		String response = paymentService.initiateTxn(id, request);
+		
+		log.info("Response from service layer: {}", response);
+		
+		return response;
 	}
 }
