@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 
 @RestController
-@RequestMapping("/payments")
+@RequestMapping("v1/payments")
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentController
