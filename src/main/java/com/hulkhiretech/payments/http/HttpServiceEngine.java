@@ -45,7 +45,7 @@ public class HttpServiceEngine
 			||  ex.getStatusCode() == HttpStatus.GATEWAY_TIMEOUT     // 504
 			) {
 				throw new CustomProviderException(
-					List.of(ErrorCodeEnum.UNABLE_TO_CONNECT.getErrorMessage()),
+					List.of(ErrorCodeEnum.UNABLE_TO_CONNECT.getErrorMessage(), httpRequest.getUrl()),
 					HttpStatus.SERVICE_UNAVAILABLE
 				);
 			}
@@ -53,12 +53,12 @@ public class HttpServiceEngine
 			return ResponseEntity.status(ex.getStatusCode())
 				.body(ex.getResponseBodyAsString());
 		}
-		catch (RuntimeException discarded) // critical failure
+		catch (RuntimeException ex) // critical failure
 		{
-			log.error("Critical error while making HTTP request", discarded);
+			log.error("Critical error while making HTTP request", ex);
 			
 			throw new CustomProviderException(
-				List.of(ErrorCodeEnum.UNABLE_TO_CONNECT.getErrorMessage()),
+				List.of(ErrorCodeEnum.UNABLE_TO_CONNECT.getErrorMessage(), httpRequest.getUrl()),
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
