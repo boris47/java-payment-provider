@@ -5,11 +5,15 @@ import java.util.UUID;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import com.hulkhiretech.payments.dao.interfaces.TransactionDao;
 import com.hulkhiretech.payments.entity.TransactionDTO;
 import com.hulkhiretech.payments.enums.TransactionStatusEnum;
+import com.hulkhiretech.payments.http.HttpRequest;
+import com.hulkhiretech.payments.http.HttpServiceEngine;
 import com.hulkhiretech.payments.pojo.CreateTxnRequest;
-import com.hulkhiretech.payments.pojo.CreateTxnResponse;
+import com.hulkhiretech.payments.pojo.TxnResponse;
 import com.hulkhiretech.payments.pojo.InitiateTxnRequest;
+import com.hulkhiretech.payments.service.helpers.CreatePaymentHelper_Stripe;
 import com.hulkhiretech.payments.service.interfaces.PaymentServiceInterface;
 import com.hulkhiretech.payments.service.interfaces.PaymentStatusServiceInterface;
 
@@ -22,24 +26,34 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements PaymentServiceInterface
 {
 	private final PaymentStatusServiceInterface paymentStatusService;
-	
+	private final TransactionDao transactionDao;
 	private final ModelMapper modelMapper;
+	private final HttpServiceEngine httpServiceEngine;
+	private final CreatePaymentHelper_Stripe createPaymentHelper_Stripe;
 	
 	/** Create txn in DB */
 	@Override
-	public CreateTxnResponse createTxn(CreateTxnRequest request)
+	public TxnResponse createTxn(CreateTxnRequest request)
 	{
 		log.info("Creating transaction in service layer");
 		
+		// Generate unique reference
+		final var uniqueGeneratedReference = UUID.randomUUID().toString();
+		
+		// Map request to entity
 		final var transactionDTO = modelMapper.map(request, TransactionDTO.class);
-		final String uniqueGeneratedReference = UUID.randomUUID().toString();
 		{
-			transactionDTO.setTxnStatus(TransactionStatusEnum.CREATED.name());
 			transactionDTO.setTxnReference(uniqueGeneratedReference);
-			log.info("Mapped entity: {}", transactionDTO);
+			
+			// Set initial status as Created
+			transactionDTO.setTxnStatus(TransactionStatusEnum.CREATED.name());
 		}
-		final TransactionDTO dto = paymentStatusService.processStatus(transactionDTO);
-		final CreateTxnResponse response = new CreateTxnResponse();
+		
+		// Process the status change
+		final var dto = paymentStatusService.processStatus(transactionDTO);
+		
+		// Create response
+		final var response = new TxnResponse();
 		{
 			response.setTxnReference(dto.getTxnReference());
 			response.setTxnStatus(dto.getTxnStatus());
@@ -54,12 +68,55 @@ public class PaymentServiceImpl implements PaymentServiceInterface
 	 * - Return url back to invoker
 	 */
 	@Override
-	public String initiateTxn(String id, InitiateTxnRequest request)
+	public TxnResponse initiateTxn(String txnReference, InitiateTxnRequest request)
 	{
-		log.info("Initiating transaction with id: {} in service layer", id);
+		log.info("Initiating transaction with id: {} in service layer, req {}", txnReference, request);
 		
-	//	var response = paymentStatusService.processStatus(1);
+		TransactionDTO transactionDTO;
 		
-		return "";
+		// Fetch txn from DB using reference
+		{
+			// Use reference to fetch the entity from DB
+			final var entity = transactionDao.getTransactionByReference(txnReference);
+			
+			// Map entity to DTO
+			transactionDTO = modelMapper.map(entity, TransactionDTO.class);
+		}
+		
+		// Set transaction as Initiated in DB
+		{
+			transactionDTO.setTxnStatus(TransactionStatusEnum.INITIATED.name());
+			
+			log.info("Update to Initiated: {}", transactionDTO);
+			
+			// Process the status change
+			transactionDTO = paymentStatusService.processStatus(transactionDTO);
+		}
+		
+		// Call stripe-provider-service to create payment
+		HttpRequest req = createPaymentHelper_Stripe.PrepareHttpReq(request);
+		var res = httpServiceEngine.MakeRequest(req);
+		var ress = createPaymentHelper_Stripe.ProcessResponse(res);
+		
+		// Set transaction as Pending in DB
+		{
+			transactionDTO.setTxnStatus(TransactionStatusEnum.PENDING.name());
+			transactionDTO.setProviderReference(ress.getId());
+			
+			log.info("Update to Pending: {}", transactionDTO);
+			
+			// Process the status change
+			transactionDTO = paymentStatusService.processStatus(transactionDTO);
+		}
+		
+		// Create response
+		final var response = new TxnResponse();
+		{
+			response.setTxnReference(transactionDTO.getTxnReference());
+			response.setTxnStatus(transactionDTO.getTxnStatus());
+			response.setRedirectUrl(ress.getUrl());
+		}
+		
+		return response;
 	}
 }

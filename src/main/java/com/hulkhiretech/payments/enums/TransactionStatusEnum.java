@@ -3,9 +3,9 @@ package com.hulkhiretech.payments.enums;
 public enum TransactionStatusEnum
 {
 	CREATED(1, "CREATED"),
-	INITIATED(1, "INITIATED"),
-	PENDING(1, "PENDING"),
-	SUCCESS(1, "SUCCESS");
+	INITIATED(2, "INITIATED"),
+	PENDING(3, "PENDING"),
+	SUCCESS(4, "SUCCESS");
 
 	private final int id;
 	private final String name;

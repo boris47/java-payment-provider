@@ -7,12 +7,14 @@ import org.springframework.context.annotation.Configuration;
 
 import com.hulkhiretech.payments.entity.TransactionDTO;
 import com.hulkhiretech.payments.entity.TransactionEntity;
-import com.hulkhiretech.payments.pojo.CreateTxnRequest;
-import com.hulkhiretech.payments.pojo.CreateTxnResponse;
-import com.hulkhiretech.payments.util.PaymentMethodEnumConverter;
-import com.hulkhiretech.payments.util.PaymentTypeEnumConverter;
-import com.hulkhiretech.payments.util.ProviderEnumConverter;
-import com.hulkhiretech.payments.util.TransactionStatusEnumConverter;
+import com.hulkhiretech.payments.util.converters.PaymentMethodEnumIntToNameConverter;
+import com.hulkhiretech.payments.util.converters.PaymentMethodEnumNameToIntConverter;
+import com.hulkhiretech.payments.util.converters.PaymentTypeEnumIntToNameConverter;
+import com.hulkhiretech.payments.util.converters.PaymentTypeEnumNameToIntConverter;
+import com.hulkhiretech.payments.util.converters.ProviderEnumIntToNameConverter;
+import com.hulkhiretech.payments.util.converters.ProviderEnumNameToIntConverter;
+import com.hulkhiretech.payments.util.converters.TransactionStatusEnumIntToNameConverter;
+import com.hulkhiretech.payments.util.converters.TransactionStatusEnumNameToIntConverter;
 
 @Configuration
 public class AppConfig
@@ -21,55 +23,38 @@ public class AppConfig
 	ModelMapper modelMapper()
 	{
 		var mapper = new ModelMapper();
-		// Create Converters instances
-		var PaymentMethodEnumConverter = new PaymentMethodEnumConverter();
-		var ProviderEnumConverter = new ProviderEnumConverter();
-		var PaymentTypeEnumConverter = new PaymentTypeEnumConverter();
-		var TransactionStatusEnumConverter = new TransactionStatusEnumConverter();
-		// Add Converters to ModelMapper
-		{
-		//	mapper.addConverter(a);
-		//	mapper.addConverter(b);
-		//	mapper.addConverter(c);
-		//	mapper.addConverter(d);
-		}
-		// Add Mappings
-		{
-	//		mapper.typeMap(CreateTxnRequest.class, TransactionDTO.class)
-	//			.addMappings(m -> {
-	//				m.map(CreateTxnRequest::getPaymentMethod, TransactionDTO::setPaymentMethodId);
-	//				m.map(CreateTxnRequest::getProvider, TransactionDTO::setProviderId);
-	//				m.map(CreateTxnRequest::getPaymentType, TransactionDTO::setPaymentTypeId);
-	//			})
-	//		;
-	//		mapper.typeMap(TransactionDTO.class, TransactionEntity.class)
-	//			.addMappings(m -> {
-	//				m.map(TransactionDTO::getTxnStatus, TransactionEntity::setTxnStatusId);
-	//			})
-	//		;
-	//		mapper.typeMap(TransactionEntity.class, TransactionDTO.class)
-	//			.addMappings(m -> {
-	//				m.map(TransactionEntity::getTxnStatusId, TransactionDTO::setTxnStatus);
-	//			})
-	//		;
-	//		mapper.typeMap(TransactionDTO.class, CreateTxnResponse.class)
-	//			.addMappings(m -> {
-	//				m.map(TransactionDTO::getTxnReference, CreateTxnResponse::setTxnReference);
-	//				m.map(TransactionDTO::getTxnStatus, CreateTxnResponse::setTxnStatus);
-	//			})
-	//		;
-		}
 		
 		{
+			var PaymentMethodEnumNameToIntConverter = new PaymentMethodEnumNameToIntConverter();
+			var ProviderEnumNameToIntConverter = new ProviderEnumNameToIntConverter();
+			var PaymentTypeEnumNameToIntConverter = new PaymentTypeEnumNameToIntConverter();
+			var TransactionStatusEnumNameToIntConverter = new TransactionStatusEnumNameToIntConverter();
 			mapper.addMappings(new PropertyMap<TransactionDTO, TransactionEntity>()
 			{
 				@Override
 				protected void configure()
 				{
-					using(PaymentMethodEnumConverter).map(source.getPaymentMethod(), destination.getPaymentMethodId());
-					using(ProviderEnumConverter).map(source.getProvider(), destination.getProviderId());
-					using(PaymentTypeEnumConverter).map(source.getPaymentType(), destination.getPaymentTypeId());
-					using(TransactionStatusEnumConverter).map(source.getTxnStatus(), destination.getTxnStatusId());
+					using(PaymentMethodEnumNameToIntConverter).map(source.getPaymentMethod(), destination.getPaymentMethodId());
+					using(ProviderEnumNameToIntConverter).map(source.getProvider(), destination.getProviderId());
+					using(PaymentTypeEnumNameToIntConverter).map(source.getPaymentType(), destination.getPaymentTypeId());
+					using(TransactionStatusEnumNameToIntConverter).map(source.getTxnStatus(), destination.getTxnStatusId());
+				}
+			});
+		}
+		{
+			var PaymentMethodEnumConverter = new PaymentMethodEnumIntToNameConverter();
+			var ProviderEnumConverter = new ProviderEnumIntToNameConverter();
+			var PaymentTypeEnumConverter = new PaymentTypeEnumIntToNameConverter();
+			var TransactionStatusEnumConverter = new TransactionStatusEnumIntToNameConverter();
+			mapper.addMappings(new PropertyMap<TransactionEntity, TransactionDTO>()
+			{
+				@Override
+				protected void configure()
+				{
+					using(PaymentMethodEnumConverter).map(source.getPaymentMethodId(), destination.getPaymentMethod());
+					using(ProviderEnumConverter).map(source.getProviderId(), destination.getProvider());
+					using(PaymentTypeEnumConverter).map(source.getPaymentTypeId(), destination.getPaymentType());
+					using(TransactionStatusEnumConverter).map(source.getTxnStatusId(), destination.getTxnStatus());
 				}
 			});
 		}

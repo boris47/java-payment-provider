@@ -16,18 +16,20 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class InitiatedStatusProcessor implements TxnStatusProcessor
 {
-	// private final TransactionDao transactionDao;
+	private final TransactionDao transactionDao;
 	
 	private final ModelMapper modelMapper;
 	
 	@Override
 	public TransactionDTO processStatus(TransactionDTO txn)
 	{
-		log.info("Processing transaction in InitiatedStatusProcessor");
+		log.info("Processing transaction in InitiatedStatusProcessor || txn {}", txn);
 		
-		// TODO Update DB as Initiated
+		final var entity = modelMapper.map(txn, TransactionEntity.class);
 		
-		// final var entity = modelMapper.map(txn, TransactionEntity.class);
+		final var res = transactionDao.UpdateTransactionDetailsByReference(entity);
+		
+		log.info("Updated rows in InitiatedStatusProcessor: {}", res);
 		
 		return txn;
 	}

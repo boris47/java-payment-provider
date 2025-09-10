@@ -1,9 +1,10 @@
 package com.hulkhiretech.payments.dao;
 
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.hulkhiretech.payments.dao.interfaces.TransactionDao;
@@ -32,8 +33,8 @@ public class TransactionDaoImpl implements TransactionDao
 	@Override
 	public Integer insertTransaction(TransactionEntity entity)
 	{
-		KeyHolder keyHolder = new GeneratedKeyHolder();
-		BeanPropertySqlParameterSource paramSource = new BeanPropertySqlParameterSource(entity);
+		final var keyHolder = new GeneratedKeyHolder();
+		final var paramSource = new BeanPropertySqlParameterSource(entity);
 		
 		jdbcTemplate.update(INSERT_SQL, paramSource, keyHolder, new String[] { "id" });
 		
@@ -42,5 +43,38 @@ public class TransactionDaoImpl implements TransactionDao
 		log.info("Inserted entity: {}", entity);
 		return entity.getId();
 	}
-
+	
+	
+	private static final String RETRIEVE_SQL = """
+		SELECT * FROM payments.`Transaction`
+		WHERE txnReference = :txnReference
+	""";
+	
+	@Override
+	public TransactionEntity getTransactionByReference(String txnReference)
+	{
+		final var param = new MapSqlParameterSource();
+		{
+			param.addValue("txnReference", txnReference);
+		}
+		return jdbcTemplate.queryForObject(RETRIEVE_SQL, param, new BeanPropertyRowMapper<>(TransactionEntity.class));
+	}
+	
+	private static final String UPDATE_STATUS_SQL = """
+		UPDATE payments.`Transaction`
+		SET txnStatusId = :txnStatusId,
+		    providerReference = :providerReference
+		WHERE txnReference = :txnReference
+	""";
+	
+	public Integer UpdateTransactionDetailsByReference(TransactionEntity entity)
+	{
+		final var param = new MapSqlParameterSource();
+		{
+			param.addValue("txnStatusId", entity.getTxnStatusId());
+			param.addValue("txnReference", entity.getTxnReference());
+			param.addValue("providerReference", entity.getProviderReference());
+		}
+		return jdbcTemplate.update(UPDATE_STATUS_SQL, param);
+	}
 }

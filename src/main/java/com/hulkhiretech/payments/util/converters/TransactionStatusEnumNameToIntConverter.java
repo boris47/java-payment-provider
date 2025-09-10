@@ -1,10 +1,10 @@
-package com.hulkhiretech.payments.util;
+package com.hulkhiretech.payments.util.converters;
 
 import org.modelmapper.AbstractConverter;
 
 import com.hulkhiretech.payments.enums.TransactionStatusEnum;
 
-public class TransactionStatusEnumConverter extends AbstractConverter<String, Integer>
+public class TransactionStatusEnumNameToIntConverter extends AbstractConverter<String, Integer>
 {
 	@Override
 	protected Integer convert(String source)

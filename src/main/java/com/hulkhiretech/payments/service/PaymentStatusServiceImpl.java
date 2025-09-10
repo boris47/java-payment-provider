@@ -21,16 +21,15 @@ public class PaymentStatusServiceImpl implements PaymentStatusServiceInterface
 	{
 		log.info("Processing payment status for txnStatus: " + txn.getTxnStatus());
 		
-		TransactionStatusEnum statusEnum = TransactionStatusEnum.fromName(txn.getTxnStatus());
-		
-		var processor = paymentStatusFactory.getProcessor(statusEnum);
-		if (processor == null) {
+		final var statusEnum = TransactionStatusEnum.fromName(txn.getTxnStatus());
+		final var processor = paymentStatusFactory.getProcessor(statusEnum);
+		if (processor == null)
+		{
 			log.error("No processor found for txnStatusId: " + txn.getTxnStatus());
 			throw new IllegalArgumentException("Invalid transaction status ID: " + txn.getTxnStatus());
 		}
 		
 		log.info("Using processor: " + processor.getClass().getSimpleName());
-		
 		return processor.processStatus(txn);
 	}
 
