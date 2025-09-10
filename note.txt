@@ -1,0 +1,18 @@
+stripe.api.key is in .env file
+
+VSCode settings file need to contain something like this:
+
+{
+	"java.compile.nullAnalysis.mode": "automatic",
+	"java.configuration.updateBuildConfiguration": "interactive",
+	"java.configuration.runtimes": [
+		{
+			"name": "JavaSE-17",
+			"path": "E:\\Developer\\JDKs\\jdk-17.0.15",
+			"default": true
+		}
+	],
+	"java.jdt.ls.java.home": "E:\\Developer\\JDKs\\jdk-17.0.15",
+	"java.import.gradle.java.home": "E:\\Developer\\JDKs\\jdk-17.0.15",
+	"maven.terminal.useJavaHome": true
+}
