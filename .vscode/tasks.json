@@ -4,11 +4,25 @@
     {
       "label": "maven clean build",
       "type": "shell",
-      "command": "mvn clean package -DskipTests",
+      "command": "mvn clean package",
       "group": {
         "kind": "build",
         "isDefault": true
       },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true,
+      }
+    },
+    {
+      "label": "maven clean build no-tests",
+      "type": "shell",
+      "command": "mvn clean package -DskipTests",
       "problemMatcher": []
     }
   ]

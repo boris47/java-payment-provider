@@ -10,7 +10,7 @@
 			"projectName": "stripe-provider-service",
 			"args": ["--spring.profiles.active=local"],
 			"envFile": "${workspaceFolder}/.env",
-			"preLaunchTask": "maven clean build"
+			"preLaunchTask": "maven clean build no-tests"
 		}
 	]
 }

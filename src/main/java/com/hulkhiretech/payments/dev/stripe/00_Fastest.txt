@@ -1,0 +1,6 @@
+cmd 1
+stripe login
+stripe listen --forward-to localhost:8083/v1/stripe/webhook
+
+cmd 2
+stripe trigger payment_intent.succeeded
