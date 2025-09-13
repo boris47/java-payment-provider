@@ -1,19 +1,19 @@
 package com.hulkhiretech.payments.service.processors;
 
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+
 import com.hulkhiretech.payments.dao.interfaces.TransactionDao;
 import com.hulkhiretech.payments.entity.TransactionDTO;
 import com.hulkhiretech.payments.entity.TransactionEntity;
 import com.hulkhiretech.payments.service.interfaces.TxnStatusProcessor;
 
-import org.modelmapper.ModelMapper;
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class InitiatedStatusProcessor implements TxnStatusProcessor
 {
 	private final TransactionDao transactionDao;

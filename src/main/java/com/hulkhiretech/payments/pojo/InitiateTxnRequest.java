@@ -7,9 +7,18 @@ import lombok.Data;
 @Data
 public class InitiateTxnRequest
 {
+	private String currency;
 	private String successUrl;
 	private String cancelUrl;
-	private String paymentMethod;
+	private List<String> paymentMethods;
 	
-	private List<InitiateTxnRequest_LineItem> lineItems;
+	private List<Product> products;
+	
+	@Data
+	private static class Product
+	{
+		private String productName;
+		private Long unitAmount; // cents
+		private Long quantity;
+	}
 }

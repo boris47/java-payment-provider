@@ -16,5 +16,8 @@ public class CreateTxnRequest
     private BigDecimal amount; //incoming request
     private String currency; // incoming request
     private String merchantTransactionReference; // incoming request
+    
+    private String successUrl;
+    private String cancelUrl;
 }
 

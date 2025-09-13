@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import com.hulkhiretech.payments.ErrorCodeEnum;
 import com.hulkhiretech.payments.exception.CustomProviderException;
 import com.hulkhiretech.payments.http.HttpRequest;
@@ -26,17 +27,27 @@ public class CreatePaymentHelper_Stripe
 	@Value("${stripe.provider.service.url}")
 	private String kStripeProviderServiceUrl;
 	
+	@Value("${stripe.provider.service.session.create.path}")
+	private String kCreatePath;
+	
+	
+	
 	private final ModelMapper modelMapper;
 	
 	private final JsonUtil jsonUtil;
 	
 	
-	public HttpRequest PrepareHttpReq(InitiateTxnRequest request)
+	public HttpRequest PrepareHttpReq(InitiateTxnRequest request, String txnReference)
 	{
-		log.info("Preparing HttpRequest for Stripe Create Payment");
+		log.info("Preparing HttpRequest for Stripe Create Payment {}", request);
 		
 		// convert from InitiateTxnRequest to RequestCreatePayment
-		var reqCreatePayment = modelMapper.map(request, RequestCreatePayment.class);
+		final var reqCreatePayment = modelMapper.map(request, RequestCreatePayment.class);
+		
+		// Append the txnReference to success and cancel URL
+		{
+			reqCreatePayment.setClientReferenceId(txnReference);
+		}
 		
 		String reqAsJson = jsonUtil.ConvertObjectToJson(reqCreatePayment);
 		if (reqAsJson == null)
@@ -54,9 +65,12 @@ public class CreatePaymentHelper_Stripe
 			headers.setContentType(MediaType.APPLICATION_JSON);
 		}
 		
+		final var finalUrl = kStripeProviderServiceUrl + kCreatePath;
+		log.info("Final URL for stripe-provider-service create payment: {}", finalUrl);
+		
 		HttpRequest req = HttpRequest.builder()
 			.method(org.springframework.http.HttpMethod.POST)
-			.url(kStripeProviderServiceUrl)
+			.url(finalUrl)
 			.headers(headers)
 			.body(reqAsJson)    // TODO
 			.build();
@@ -74,7 +88,7 @@ public class CreatePaymentHelper_Stripe
 		
 		// convert to obj and check url
 		var obj = jsonUtil.ConvertJsonToObject(res.getBody(), StripeProviderPaymentResponse.class);
-		if (obj == null || obj.getUrl() == null || obj.getUrl().isBlank())
+		if (obj == null || obj.getPaymentUrl() == null || obj.getPaymentUrl().isBlank())
 		{
 			throw new CustomProviderException(
 				ErrorCodeEnum.UNABLE_TO_INITIATE_PAYMENT.getErrorCode(),

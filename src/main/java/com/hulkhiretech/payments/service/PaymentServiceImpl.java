@@ -8,11 +8,10 @@ import org.springframework.stereotype.Service;
 import com.hulkhiretech.payments.dao.interfaces.TransactionDao;
 import com.hulkhiretech.payments.entity.TransactionDTO;
 import com.hulkhiretech.payments.enums.TransactionStatusEnum;
-import com.hulkhiretech.payments.http.HttpRequest;
 import com.hulkhiretech.payments.http.HttpServiceEngine;
 import com.hulkhiretech.payments.pojo.CreateTxnRequest;
-import com.hulkhiretech.payments.pojo.TxnResponse;
 import com.hulkhiretech.payments.pojo.InitiateTxnRequest;
+import com.hulkhiretech.payments.pojo.TxnResponse;
 import com.hulkhiretech.payments.service.helpers.CreatePaymentHelper_Stripe;
 import com.hulkhiretech.payments.service.interfaces.PaymentServiceInterface;
 import com.hulkhiretech.payments.service.interfaces.PaymentStatusServiceInterface;
@@ -94,9 +93,9 @@ public class PaymentServiceImpl implements PaymentServiceInterface
 		}
 		
 		// Call stripe-provider-service to create payment
-		HttpRequest req = createPaymentHelper_Stripe.PrepareHttpReq(request);
-		var res = httpServiceEngine.MakeRequest(req);
-		var ress = createPaymentHelper_Stripe.ProcessResponse(res);
+		final var req = createPaymentHelper_Stripe.PrepareHttpReq(request, txnReference);
+		final var res = httpServiceEngine.MakeRequest(req);
+		final var ress = createPaymentHelper_Stripe.ProcessResponse(res);
 		
 		// Set transaction as Pending in DB
 		{
@@ -114,9 +113,79 @@ public class PaymentServiceImpl implements PaymentServiceInterface
 		{
 			response.setTxnReference(transactionDTO.getTxnReference());
 			response.setTxnStatus(transactionDTO.getTxnStatus());
-			response.setRedirectUrl(ress.getUrl());
+			response.setRedirectUrl(ress.getPaymentUrl());
 		}
 		
+		return response;
+	}
+	
+	@Override
+	public TxnResponse successTxn(String txnReference)
+	{
+		log.info("Marking transaction with id: {} as success in service layer", txnReference);
+		
+		TransactionDTO transactionDTO;
+		
+		// Fetch txn from DB using reference
+		{
+			// Use reference to fetch the entity from DB
+			final var entity = transactionDao.getTransactionByReference(txnReference);
+			
+			// Map entity to DTO
+			transactionDTO = modelMapper.map(entity, TransactionDTO.class);
+		}
+		
+		// Set transaction as Success in DB
+		{
+			transactionDTO.setTxnStatus(TransactionStatusEnum.SUCCESS.name());
+			
+			log.info("Update to Success: {}", transactionDTO);
+			
+			// Process the status change
+			transactionDTO = paymentStatusService.processStatus(transactionDTO);
+		}
+		
+		// Create response
+		final var response = new TxnResponse();
+		{
+			response.setTxnReference(transactionDTO.getTxnReference());
+			response.setTxnStatus(transactionDTO.getTxnStatus());
+		}
+		return response;
+	}
+
+	@Override
+	public TxnResponse failedTxn(String txnReference)
+	{
+		log.info("Marking transaction with id: {} as failed in service layer", txnReference);
+
+		TransactionDTO transactionDTO;
+
+		// Fetch txn from DB using reference
+		{
+			// Use reference to fetch the entity from DB
+			final var entity = transactionDao.getTransactionByReference(txnReference);
+
+			// Map entity to DTO
+			transactionDTO = modelMapper.map(entity, TransactionDTO.class);
+		}
+
+		// Set transaction as Failed in DB
+		{
+			transactionDTO.setTxnStatus(TransactionStatusEnum.FAILED.name());
+
+			log.info("Update to Failed: {}", transactionDTO);
+
+			// Process the status change
+			transactionDTO = paymentStatusService.processStatus(transactionDTO);
+		}
+
+		// Create response
+		final var response = new TxnResponse();
+		{
+			response.setTxnReference(transactionDTO.getTxnReference());
+			response.setTxnStatus(transactionDTO.getTxnStatus());
+		}
 		return response;
 	}
 }

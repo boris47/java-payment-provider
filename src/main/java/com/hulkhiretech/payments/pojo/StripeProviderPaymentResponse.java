@@ -6,5 +6,5 @@ import lombok.Data;
 public class StripeProviderPaymentResponse
 {
 	private String id;
-	private String url;
+	private String paymentUrl;
 }

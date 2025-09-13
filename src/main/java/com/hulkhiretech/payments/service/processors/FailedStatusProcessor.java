@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PendingStatusProcessor implements TxnStatusProcessor
+public class FailedStatusProcessor implements TxnStatusProcessor
 {
 	private final TransactionDao transactionDao;
 	
@@ -23,14 +23,14 @@ public class PendingStatusProcessor implements TxnStatusProcessor
 	@Override
 	public TransactionDTO processStatus(TransactionDTO txn)
 	{
-		log.info("Processing transaction in PendingStatusProcessor");
-		
+		log.info("Processing transaction in FailedStatusProcessor");
+
 		final var entity = modelMapper.map(txn, TransactionEntity.class);
 		
 		final var res = transactionDao.UpdateTransactionDetailsByReference(entity);
-		
-		log.info("Updated rows in PendingStatusProcessor: {}", res);
-		
+
+		log.info("Updated rows in FailedStatusProcessor: {}", res);
+
 		return txn;
 	}
 }

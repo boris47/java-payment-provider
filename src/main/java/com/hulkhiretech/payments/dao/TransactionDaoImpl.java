@@ -71,9 +71,12 @@ public class TransactionDaoImpl implements TransactionDao
 	{
 		final var param = new MapSqlParameterSource();
 		{
-			param.addValue("txnStatusId", entity.getTxnStatusId());
+			// Identify the transaction to be updated
 			param.addValue("txnReference", entity.getTxnReference());
+			// Identify the transaction inside defined provider
 			param.addValue("providerReference", entity.getProviderReference());
+			// The status of the transaction
+			param.addValue("txnStatusId", entity.getTxnStatusId());
 		}
 		return jdbcTemplate.update(UPDATE_STATUS_SQL, param);
 	}

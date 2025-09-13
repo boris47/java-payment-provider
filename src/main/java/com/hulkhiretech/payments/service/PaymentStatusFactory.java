@@ -6,8 +6,10 @@ import org.springframework.stereotype.Component;
 import com.hulkhiretech.payments.enums.TransactionStatusEnum;
 import com.hulkhiretech.payments.service.interfaces.TxnStatusProcessor;
 import com.hulkhiretech.payments.service.processors.CreatedStatusProcessor;
+import com.hulkhiretech.payments.service.processors.FailedStatusProcessor;
 import com.hulkhiretech.payments.service.processors.InitiatedStatusProcessor;
 import com.hulkhiretech.payments.service.processors.PendingStatusProcessor;
+import com.hulkhiretech.payments.service.processors.SuccessStatusProcessor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,8 @@ public class PaymentStatusFactory
 			case CREATED:   return context.getBean(CreatedStatusProcessor.class);
 			case INITIATED: return context.getBean(InitiatedStatusProcessor.class);
 			case PENDING:   return context.getBean(PendingStatusProcessor.class);
+			case SUCCESS:   return context.getBean(SuccessStatusProcessor.class);
+			case FAILED:    return context.getBean(FailedStatusProcessor.class);
 		}
 		return null;
 	}
