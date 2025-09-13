@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.hulkhiretech.payments.controller.pojo.SessionCreateRequest;
+import com.hulkhiretech.payments.controller.pojo.SessionCreateRequest.Product;
 import com.hulkhiretech.payments.controller.pojo.SessionResponse;
-import com.hulkhiretech.payments.controller.pojo.ProductRequest;
 import com.hulkhiretech.payments.service.interfaces.ISessionService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
@@ -27,8 +27,11 @@ public final class SessionService implements ISessionService
 	@Override
 	public SessionResponse createSession(SessionCreateRequest request) throws StripeException
 	{
+		log.info("Creating session for request {}", request);
+		
 		SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
 			.setMode(SessionCreateParams.Mode.PAYMENT)
+			.setClientReferenceId(request.getClientReferenceId())
 			.setSuccessUrl(request.getSuccessUrl())
 			.setCancelUrl(request.getCancelUrl())
 		;
@@ -39,6 +42,7 @@ public final class SessionService implements ISessionService
 		
 		Session session = Session.create(paramsBuilder.build());
 		SessionResponse response = new SessionResponse(session);
+		log.info("Created session: {}", response);
 		return response;
 	}
 	
@@ -59,10 +63,10 @@ public final class SessionService implements ISessionService
 		return response;
 	}
 
-	private final static void ProcessProducts(SessionCreateParams.Builder paramsBuilder, List<ProductRequest> products, String currency)
+	private final static void ProcessProducts(SessionCreateParams.Builder paramsBuilder, List<Product> products, String currency)
 	{
 		List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
-		for (ProductRequest product : products)
+		for (var product : products)
 		{
 			lineItems.add(
 				SessionCreateParams.LineItem.builder()
@@ -70,10 +74,10 @@ public final class SessionService implements ISessionService
 					.setPriceData(
 						SessionCreateParams.LineItem.PriceData.builder()
 							.setCurrency(currency)
-							.setUnitAmount(product.getPrice()) // price in cents
+							.setUnitAmount(product.getUnitAmount()) // price in cents
 							.setProductData(
 								SessionCreateParams.LineItem.PriceData.ProductData.builder()
-									.setName(product.getName())
+									.setName(product.getProductName())
 									.build()
 							)
 							.build()

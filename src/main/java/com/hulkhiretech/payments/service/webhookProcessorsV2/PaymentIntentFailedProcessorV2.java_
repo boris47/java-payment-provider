@@ -1,0 +1,34 @@
+package com.hulkhiretech.payments.service.webhookProcessorsV2;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+// Occurs when a PaymentIntent has failed the attempt to create a payment method or a payment.
+@Slf4j
+@Service("v2.payment_intent.payment_failed")
+@RequiredArgsConstructor
+public class PaymentIntentFailedProcessorV2 extends BaseWebhookProcessor
+{
+	@Override
+	public void process(Map<String, Object> eventObj)
+	{
+		String paymentIntentId = getValue(eventObj, "id", String.class, null);
+		int amount = getValue(eventObj, "amount", Integer.class, 0);
+		String currency = getValue(eventObj, "currency", String.class, null);
+
+		@SuppressWarnings("unchecked") // stop ide from bothering me about 'Type safety cast' warning
+		LinkedHashMap<String, Object> lastPaymentError = getValue(eventObj, "last_payment_error", LinkedHashMap.class, null);
+		String failureMessage = getValue(lastPaymentError, "message", String.class, "N/A");
+
+		log.info("Payment intent failed: paymentIntentId='{}', amount='{}', currency='{}', failureMessage='{}'",
+			paymentIntentId,
+			String.format("%05d", amount),
+			currency,
+			failureMessage);
+	}
+}

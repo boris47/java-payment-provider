@@ -1,5 +1,7 @@
 package com.hulkhiretech.payments.service;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hulkhiretech.payments.controller.pojo.StripeEventV2;
 import com.hulkhiretech.payments.service.interfaces.IWebhookServiceV2;
+import com.hulkhiretech.payments.service.webhookProcessorsV2.IWebhookProcessor;
 import com.hulkhiretech.payments.util.Constants;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.Webhook;
@@ -21,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 public final class WebhookServiceV2 implements IWebhookServiceV2
 {
 	private final ObjectMapper objectMapper;
+	
+	private final Map<String, IWebhookProcessor> services;
 	
 	@Value("${stripe.webhook.secret.v2}")
 	private String kSecret;
@@ -36,25 +41,16 @@ public final class WebhookServiceV2 implements IWebhookServiceV2
 			return;
 		}
 		
-		log.info("Received event: id={}, type={}", event.getId(), event.getType());
+		final String version = "v2";
+		final var eventType = event.getType();
+		final var processor = services.get(version + "." + eventType);
+		if (processor == null)
+		{
+			log.warn("No processor service ({}) found for event type: {}", version, eventType);
+			return;
+		}
 		
-	//	switch (event.getType())
-	//	{
-	//		case "checkout.session.completed":
-	//		{
-	//			String sessionId = (String) event.getData().getObject().get("id");
-	//			String paymentStatus = (String) event.getData().getObject().get("payment_status");
-	//			log.info("Checkout session completed: sessionId={}, paymentStatus={}", sessionId, paymentStatus);
-	//			break;
-	//		}
-	//		case "payment_intent.succeeded":
-	//		{
-	//			String paymentIntentId = (String) event.getData().getObject().get("id");
-	//			log.info("Payment intent succeeded: paymentIntentId={}", paymentIntentId);
-	//			break;
-	//		}
-	//	}
-	//	return;
+		processor.process(event.getData().getObject());
 	}
 	
 	
